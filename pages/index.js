@@ -23,14 +23,30 @@ export default function PaginaInicial() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const isValid = username.length > 2 ? true : false
-  const handleInput =(event)=>{
-    const value = event.target.value
+  const [userInfo, setUSerInfo] = useState({});
+  const [isFound, setIsFound ] = useState(false)
+
+  const handleInput =async(event)=>{
+    const value = event.target.value;
     setUsername(value);
+
+    //terminar de fazer a parte de usuário não encontrado
+    await fetch(`https://api.github.com/users/${value}`)
+      .then(async(response)=>{
+        {response.ok ? (
+          setUSerInfo(await response.json()),
+          setIsFound(true)  
+        ):(
+          setIsFound(false)
+        )}
+      }).catch((err)=>{
+        throw err;
+      })
   }
 
   const handleSubmit =(event)=>{
     event.preventDefault()
-    router.push('/chat');
+    router.push(`/chat?username=${username}`);
   }
 
   return (
@@ -39,7 +55,7 @@ export default function PaginaInicial() {
         styleSheet={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           backgroundColor: appConfig.theme.colors.primary[500],
-          backgroundImage: 'url(https://virtualbackgrounds.site/wp-content/uploads/2020/08/the-matrix-digital-rain.jpg)',
+          backgroundImage: 'url(https://image.freepik.com/free-vector/gradient-dynamic-blue-lines-background_23-2148995756.jpg)',
           backgroundRepeat: 'no-repeat', backgroundSize: 'cover', backgroundBlendMode: 'multiply',
         }}
       >
@@ -78,11 +94,14 @@ export default function PaginaInicial() {
               fullWidth
               textFieldColors={{
                 neutral: {
-                  textColor: appConfig.theme.colors.neutrals[200],
-                  mainColor: appConfig.theme.colors.neutrals[900],
+                  textColor: appConfig.theme.colors.neutrals[500],
+                  mainColor: appConfig.theme.colors.neutrals[500],
                   mainColorHighlight: appConfig.theme.colors.primary[500],
-                  backgroundColor: appConfig.theme.colors.neutrals[800],
+                  backgroundColor: appConfig.theme.colors.neutrals[0],
                 },
+              }}
+              styleSheet={{
+                fontSize: '16px'
               }}
             />
             <Button
@@ -107,6 +126,7 @@ export default function PaginaInicial() {
               flexDirection: 'column',
               alignItems: 'center',
               maxWidth: '200px',
+              minWidth: '200px',
               padding: '16px',
               backgroundColor: appConfig.theme.colors.neutrals[800],
               border: '1px solid',
@@ -116,6 +136,7 @@ export default function PaginaInicial() {
               minHeight: '240px',
             }}
           >
+          
             <Image
               styleSheet={{
                 borderRadius: '50%',
@@ -128,9 +149,10 @@ export default function PaginaInicial() {
                 variant="body4"
                 styleSheet={{
                   color: appConfig.theme.colors.neutrals[200],
-                  backgroundColor: appConfig.theme.colors.neutrals[900],
+                  //backgroundColor: appConfig.theme.colors.neutrals[900],
                   padding: '3px 10px',
-                  borderRadius: '1000px'
+                  borderRadius: '1000px', 
+                  fontSize: '16px'
                 }}
               >
                 {username}
