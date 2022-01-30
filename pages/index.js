@@ -84,8 +84,8 @@ export default function PaginaInicial() {
             }}
           >
             <Titulo tag="h2">Boas vindas de volta!</Titulo>
-            <Text variant="body3" styleSheet={{ marginBottom: '32px', color: appConfig.theme.colors.neutrals[300] }}>
-              {appConfig.name}
+            <Text variant="body3" styleSheet={{ marginTop: '10px', marginBottom: '32px', color: appConfig.theme.colors.neutrals[300] }}>
+              Para entrar no chat, digite seu usuário do Github
             </Text>
 
             <TextField
