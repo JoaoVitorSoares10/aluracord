@@ -23,7 +23,7 @@ export default function PaginaInicial() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const isValid = username.length > 2 ? true : false
-  const [userInfo, setUSerInfo] = useState({});
+  //const [userInfo, setUSerInfo] = useState({});
   const [isFound, setIsFound ] = useState(false)
 
   const handleInput =async(event)=>{
@@ -156,7 +156,8 @@ export default function PaginaInicial() {
                   textAlign: 'center'
                 }}
               >
-                {userInfo.name}
+                {/* {userInfo.name} */}
+                {username}
               </Text>
             }
           </Box>
