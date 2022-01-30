@@ -46,7 +46,7 @@ export default function PaginaInicial() {
 
   const handleSubmit =(event)=>{
     event.preventDefault()
-    router.push(`/chat?username=${username}`);
+    router.push(`/chat?username=${username.toLowerCase()}`);
   }
 
   return (
@@ -152,10 +152,11 @@ export default function PaginaInicial() {
                   //backgroundColor: appConfig.theme.colors.neutrals[900],
                   padding: '3px 10px',
                   borderRadius: '1000px', 
-                  fontSize: '16px'
+                  fontSize: '16px',
+                  textAlign: 'center'
                 }}
               >
-                {username}
+                {userInfo.name}
               </Text>
             }
           </Box>

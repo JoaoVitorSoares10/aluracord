@@ -23,6 +23,7 @@ export default function ChatPage() {
     const CurrentUser = router.query.username;
     const [message, setMessage] = useState('');
     const [listMessage, setListMessage] = useState([]);
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
         SupabaseClient
@@ -31,6 +32,9 @@ export default function ChatPage() {
             .order('id', { ascending: false })
             .then(({ data }) => {
                 setListMessage(data);
+                setIsLoading(() => {
+                    return false
+                })
             })
 
         const subscription = ConsultNewMensagesRealTime((newMessage) => {
@@ -60,38 +64,26 @@ export default function ChatPage() {
     }
 
     const handleSend = (newMessage) => {
-        const currentMessage = {
-            from: CurrentUser,
-            text: newMessage
-        };
+        if(newMessage){
+            const currentMessage = {
+                from: CurrentUser,
+                text: newMessage
+            };
+                
+            SupabaseClient
+                .from('Messages')
+                .insert([currentMessage])
+                .then(({ data }) => {
+                    console.log('Criando mensagem' + data)
+                })
 
-        SupabaseClient
-            .from('Messages')
-            .insert([currentMessage])
-            .then(({ data }) => {
-                console.log('Criando mensagem' + data)
-            })
-
-        setMessage('');
+            setMessage('');
+        }
     }
 
     const onStickerClick = (sticker) => {
         handleSend(`:sticker:${sticker}`)
     }
-
-    const FormatDate = (StringDate) => {
-        const NewDate = new Date(StringDate);
-        let year = NewDate.getFullYear();
-        let month = addZero(NewDate.getMonth() + 1);
-        let day = addZero(NewDate.getDate());
-
-        var hora = NewDate.getHours();
-        var min = NewDate.getMinutes();
-
-        return `${day}/${month}/${year} - ${hora}:${min}`
-    }
-
-    const addZero = (n) => n < 10 ? `0${n}` : `${n}`;
 
     return (
         <Box
@@ -134,7 +126,7 @@ export default function ChatPage() {
                     <MessageList
                         messages={listMessage}
                         user={CurrentUser}
-                        FormatDate={FormatDate}
+                        loading={isLoading}
                     />
 
                     <Box
@@ -142,7 +134,10 @@ export default function ChatPage() {
                         styleSheet={{
                             display: 'flex',
                             alignItems: 'center',
-                            marginBottom: '10px'
+                            marginBottom: {
+                                xs: '30px',
+                                sm: '10px',
+                            },
                         }}
                     >
                         <ButtonSendSticker onStickerClick={onStickerClick} />
@@ -206,9 +201,23 @@ function Header() {
 
 function MessageList(props) {
     const num = [60, 50, 60, 70, 80, 60, 50]
+    const FormatDate = (StringDate) => {
+        const NewDate = new Date(StringDate);
+        let year = NewDate.getFullYear();
+        let month = addZero(NewDate.getMonth() + 1);
+        let day = addZero(NewDate.getDate());
+
+        var hora = NewDate.getHours();
+        var min = NewDate.getMinutes();
+
+        return `${day}/${month}/${year} - ${hora}:${min}`
+    }
+
+    const addZero = (n) => n < 10 ? `0${n}` : `${n}`;
+
     return (
         <>
-            {props.messages.length === 0 ?
+            {props.loading ?
                 <Box
                     tag="ul"
                     styleSheet={{
@@ -221,9 +230,10 @@ function MessageList(props) {
                         overflowX: 'hidden',
                     }}
                 >
-                    {num.map((n) => {
+                    {num.map((n, i) => {
                         return (
                             <Box
+                                key={i}
                                 styleSheet={{
                                     display: 'flex',
                                     marginTop: '30px',
@@ -244,7 +254,7 @@ function MessageList(props) {
                                     borderRadius: '10px',
                                     padding: '10px 10px',
                                     marginLeft: '10px',
-                                    height: `${n+30}%`,
+                                    height: `${n + 30}%`,
                                     Width: `${n}%`
                                 }}>
                                     <Box>
@@ -286,7 +296,6 @@ function MessageList(props) {
                         )
                     })}
                 </Box>
-                //normal
                 :
                 <Box
                     tag="ul"
@@ -300,91 +309,110 @@ function MessageList(props) {
                         overflowX: 'hidden',
                     }}
                 >
-                    {props.messages.map((currentMensagens) => {
-                        return (
-                            <Box
-                                key={currentMensagens.id}
+                    {props.messages.length === 0 ?
+                        <Box
+                            styleSheet={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                color: appConfig.theme.colors.neutrals["400"],
+                            }}
+                        >
+                            <Text
                                 styleSheet={{
-                                    display: 'flex',
-                                    marginTop: '30px',
-                                    marginRight: { xs: '0px', md: '30px' },
-                                    justifyContent: currentMensagens.from === props.user ? 'right' : 'left',
+                                    fontSize: '16px'
                                 }}
                             >
-                                {currentMensagens.from !== props.user &&
-                                    <Box>
-                                        <Image
-                                            styleSheet={{
-                                                width: '30px',
-                                                height: '30px',
-                                                borderRadius: '50%',
-                                                display: 'inline-block',
-                                            }}
-                                            src={`https://github.com/${currentMensagens.from}.png`}
-                                        />
-                                    </Box>
-                                }
-                                <Box styleSheet={{
-                                    backgroundColor: currentMensagens.from === props.user ? appConfig.theme.colors.primary[800] : appConfig.theme.colors.neutrals[500],
-                                    borderRadius: '10px',
-                                    padding: '10px 10px',
-                                    marginLeft: currentMensagens.from === props.user ? '0px' : '10px',
-                                    maxWidth: '85%'
-                                }}>
-                                    <Box>
-                                        {currentMensagens.from !== props.user &&
-                                            <Text
-                                                tag="strong"
+                                Não há mensagens
+                            </Text>
+                        </Box>
+                        :
+                        props.messages.map((currentMensagens) => {
+                            return (
+                                <Box
+                                    key={currentMensagens.id}
+                                    styleSheet={{
+                                        display: 'flex',
+                                        marginTop: '30px',
+                                        marginRight: { xs: '0px', md: '30px' },
+                                        justifyContent: currentMensagens.from === props.user ? 'right' : 'left',
+                                    }}
+                                >
+                                    {currentMensagens.from !== props.user &&
+                                        <Box>
+                                            <Image
                                                 styleSheet={{
-                                                    fontSize: '16px',
-                                                    marginLeft: '10px',
+                                                    width: '30px',
+                                                    height: '30px',
+                                                    borderRadius: '50%',
+                                                    display: 'inline-block',
                                                 }}
-                                            >
-                                                {currentMensagens.from}
-                                            </Text>}
-                                    </Box>
+                                                src={`https://github.com/${currentMensagens.from}.png`}
+                                            />
+                                        </Box>
+                                    }
+                                    <Box styleSheet={{
+                                        backgroundColor: currentMensagens.from === props.user ? appConfig.theme.colors.primary[800] : appConfig.theme.colors.neutrals[500],
+                                        borderRadius: '10px',
+                                        padding: '10px 10px',
+                                        marginLeft: currentMensagens.from === props.user ? '0px' : '10px',
+                                        maxWidth: '85%'
+                                    }}>
+                                        <Box>
+                                            {currentMensagens.from !== props.user &&
+                                                <Text
+                                                    tag="strong"
+                                                    styleSheet={{
+                                                        fontSize: '16px',
+                                                        marginLeft: '10px',
+                                                    }}
+                                                >
+                                                    {currentMensagens.from}
+                                                </Text>}
+                                        </Box>
 
-                                    <Box
-                                        styleSheet={{
-                                            marginTop: '10px',
-                                            marginLeft: '10px',
-                                        }}
-                                    >
-                                        <Text
-                                            styleSheet={currentMensagens.from === props.user ? {
-                                                fontSize: '16px',
-                                            } : {
-                                                fontSize: '16px',
-                                                color: appConfig.theme.colors.neutrals[200],
+                                        <Box
+                                            styleSheet={{
+                                                marginTop: '10px',
+                                                marginLeft: '10px',
                                             }}
                                         >
-                                            {currentMensagens.text.startsWith(':sticker:') ?
-                                                <Image
-                                                    src={currentMensagens.text.replace(':sticker:', '')}
-                                                    styleSheet={{
-                                                        maxWidth: '100px'
-                                                    }}
-                                                />
-                                                :
-                                                currentMensagens.text
-                                            }
-                                        </Text>
-                                        <Box styleSheet={{ textAlign: 'right' }}>
                                             <Text
-                                                styleSheet={{
-                                                    fontSize: '10px',
-                                                    color: appConfig.theme.colors.neutrals[300],
+                                                styleSheet={currentMensagens.from === props.user ? {
+                                                    fontSize: '16px',
+                                                } : {
+                                                    fontSize: '16px',
+                                                    color: appConfig.theme.colors.neutrals[200],
                                                 }}
-                                                tag="span"
                                             >
-                                                {props.FormatDate(currentMensagens.created_at)}
+                                                {currentMensagens.text.startsWith(':sticker:') ?
+                                                    <Image
+                                                        src={currentMensagens.text.replace(':sticker:', '')}
+                                                        styleSheet={{
+                                                            maxWidth: '100px'
+                                                        }}
+                                                    />
+                                                    :
+                                                    currentMensagens.text
+                                                }
                                             </Text>
+                                            <Box styleSheet={{ textAlign: 'right' }}>
+                                                <Text
+                                                    styleSheet={{
+                                                        fontSize: '10px',
+                                                        color: appConfig.theme.colors.neutrals[300],
+                                                    }}
+                                                    tag="span"
+                                                >
+                                                    {FormatDate(currentMensagens.created_at)}
+                                                </Text>
+                                            </Box>
                                         </Box>
                                     </Box>
                                 </Box>
-                            </Box>
-                        )
-                    })}
+                            )
+                        })
+                    }
                 </Box>
             }
         </>
